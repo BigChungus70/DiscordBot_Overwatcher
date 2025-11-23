@@ -17,6 +17,7 @@ async def handle_voice_state_update(member, before, after):
         return
 
     tracked_channels = server_list[guild_id].get("tracked_channels_ids", [])
+    log_channels = server_list[guild_id].get("log_channel_ids", [])
 
     sessions_data = load_sessions()
     history_data = load_history()
@@ -46,6 +47,13 @@ async def handle_voice_state_update(member, before, after):
             history_data[guild_id][member_id]["total_time"] += duration
             del sessions_data[guild_id][member_id]
             save_history(history_data)
+            if duration >= 300:
+                for log_channel_id in log_channels:
+                    log_channel = member.guild.get_channel(log_channel_id)
+                    if log_channel:
+                        await log_channel.send(
+                            f"{member.display_name} spent {format_duration(duration)} in tracked channels."
+                        )
 
     save_sessions(sessions_data)
 
@@ -99,7 +107,6 @@ async def checkpoint(bot):
                         history_data[guild_id][member_id]["total_time"] += duration
                         sessions_data[guild_id][member_id]["join_time"] = current_time
 
-                
                 members_who_left = session_member_ids - active_member_ids
                 for member_id in members_who_left:
                     duration = (

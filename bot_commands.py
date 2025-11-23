@@ -1,6 +1,8 @@
 import discord
 from helper_methods import *
 import time
+
+
 async def check_status(ctx):
     guild_id = str(ctx.guild.id)
     sessions_data = load_sessions()
@@ -34,7 +36,9 @@ async def check_history(ctx):
     for member_id, member_info in history.items():
         member = ctx.guild.get_member(int(member_id))
         if member:
-            status += f"- {member.mention}: {format_duration(member_info['total_time'])}\n"
+            status += (
+                f"- {member.mention}: {format_duration(member_info['total_time'])}\n"
+            )
 
     await ctx.send(status)
 
@@ -44,7 +48,7 @@ async def check_user(ctx, user):
     history_data = load_history()
     sessions_data = load_sessions()
     member_id = str(user.id)
-    
+
     total_time = 0
 
     if guild_id in history_data and member_id in history_data[guild_id]:
@@ -61,7 +65,7 @@ async def check_user(ctx, user):
     await ctx.send(f"{user.mention}: {format_duration(total_time)}")
 
 
-async def setup_voice(ctx, tracked_channel: discord.VoiceChannel , bot):
+async def setup_voice(ctx, tracked_channel: discord.VoiceChannel, bot):
     app_info = await bot.application_info()
     owner_id = app_info.owner.id
     if not ctx.author.guild_permissions.administrator and ctx.author.id != owner_id:
@@ -82,6 +86,7 @@ async def setup_voice(ctx, tracked_channel: discord.VoiceChannel , bot):
     await ctx.send(
         f"Setup completed\nUsers in: {tracked_channel.mention} will be tracked."
     )
+
 
 async def setup_log(ctx, log_channel: discord.TextChannel, bot):
     app_info = await bot.application_info()
@@ -108,19 +113,19 @@ async def reset_setup(ctx, bot):
     guild_id = str(ctx.guild.id)
     app_info = await bot.application_info()
     owner_id = app_info.owner.id
-
     if not ctx.author.guild_permissions.administrator and ctx.author.id != owner_id:
         await ctx.send(
             "You need administrator permissions or be the bot owner to do this cuz you aren't the very humungous big chungus."
         )
         return
-
     server_list_data = load_server_list()
     if guild_id in server_list_data:
+        del server_list_data[guild_id]
         save_server_list(server_list_data)
         await ctx.send("All setups for this server have been nuked.")
     else:
         await ctx.send("No setup found for this server. Nothing to nuke.")
+
 
 async def remove_voice(ctx, voice_channel, bot):
     guild_id = str(ctx.guild.id)
@@ -139,7 +144,9 @@ async def remove_voice(ctx, voice_channel, bot):
     ):
         server_list_data[guild_id]["tracked_channels_ids"].remove(voice_channel.id)
         save_server_list(server_list_data)
-        await ctx.send(f"{voice_channel.mention} has been removed from tracked channels.")
+        await ctx.send(
+            f"{voice_channel.mention} has been removed from tracked channels."
+        )
     else:
         await ctx.send("That channel isn't being tracked.")
 
@@ -171,20 +178,22 @@ async def test_setup(ctx, bot):
     server_data = server_list_data.get(str(ctx.guild.id))
     if not server_data:
         await ctx.send(
-            f"No configuration found for this server. Use `{bot.command_prefix}setup_voice <tracked_channel>` and `{bot.command_prefix}setup_log <log_channel>` first."
+            f"No configuration found for this server. Use `{bot.command_prefix}add_voice <track_channel>` and `{bot.command_prefix}add_log <log_channel>` first."
         )
         return
 
     status = "**Bot Setup Status:**\n"
 
     status += f"**Tracked Channels:**\n"
-    for channel_id in server_data["tracked_channels_ids"]:
+    for channel_id in server_data.get("tracked_channels_ids", []):
         channel = ctx.guild.get_channel(channel_id)
-        status += f"- {channel.mention}\n"
+        if channel:
+            status += f"- {channel.mention}\n"
 
     status += f"**Log Channels:**\n"
-    for channel_id in server_data["log_channel_ids"]:
+    for channel_id in server_data.get("log_channel_ids", []):
         channel = ctx.guild.get_channel(channel_id)
-        status += f"- {channel.mention}\n"
+        if channel:
+            status += f"- {channel.mention}\n"
 
     await ctx.send(status)
