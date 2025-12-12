@@ -1,1 +1,3 @@
-# **THIS DOESN'T CURRENTLY WORK AS INTEDED, DO NOT USE**
+# **THIS DOESN'T CURRENTLY WORK AS INTENDED, DO NOT USE**
+
+#### to be fixed when i feel like it ^-^
